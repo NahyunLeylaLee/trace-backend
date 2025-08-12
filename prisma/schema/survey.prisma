@@ -1,0 +1,15 @@
+model Survey {
+  id          Int      @id @default(autoincrement())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+  title       String
+  description String?
+  age Int
+  term Int
+  isActive Boolean @default(true)
+  invalidAt DateTime?
+  order Int
+  IsMain Boolean @default(false)
+  IsBasic Boolean @default(false)
+  startSending Boolean @default(false) 
+}
