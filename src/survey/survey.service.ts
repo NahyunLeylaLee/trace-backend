@@ -8,16 +8,6 @@ export class SurveyService {
   ) {}
 
   getAll() {
-    return this.db.survey.findMany({
-      select: {
-        id: true,
-        createdAt: true,
-        title: true,
-        age: true,
-        term: true,
-        isActive: true,
-        IsMain: true,
-      }
-    });
+    return this.db.survey.findMany();
   }
 }
