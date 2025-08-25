@@ -1,15 +1,129 @@
 model Survey {
+  id          Int             @id @default(autoincrement())
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @default(now()) @updatedAt
+  activatedAt DateTime?
+  version     String          @default("v1")
+  status      SurveyStatus    @default(DRAFT) // DRAFT가 있으면 생성이 안되게 백엔드에서 제어
+  title       String
+  sections    Section[]
+  histories   SurveyHistory[]
+}
+
+enum SurveyStatus {
+  DRAFT // 임시보관
+  ACTIVE // 활성화
+  ARCHIVED // 비활성화
+}
+
+model Section {
+  id          Int        @id @default(autoincrement())
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @default(now()) @updatedAt
+  title       String
+  description String?
+  order       Int
+  surveyId    Int
+  survey      Survey     @relation(fields: [surveyId], references: [id])
+  questions   Question[]
+}
+
+model Question {
+  id             Int                 @id @default(autoincrement())
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @default(now()) @updatedAt
+  type           QuestionType
+  title          String
+  alias          String? // 별칭
+  guide          String? // 도움말
+  order          Int
+  minimum        String? // 선형배율, 숫자형
+  maximum        String? // 선형배율, 숫자형
+  isRequired     Boolean
+  showConditions QuestionCondition[]
+  sectionId      Int
+  section        Section             @relation(fields: [sectionId], references: [id])
+  options        Option[]
+  answers        Answer[]
+}
+
+enum QuestionType {
+  TEXT_VIEW
+  SHORT_ANSWER
+  LONG_ANSWER
+  NUMERIC_ANSWER
+  BLANK_ANSWER
+  MULTIPLE_CHOICE
+  CHECKBOXES
+  DROP_DOWN
+  DROP_DOWN_RANGE
+  LINEAR_SCALE
+  RADIO_GRID
+  CHECKBOX_GRID
+  DATE_ANSWER
+  YEAR_ANSWER
+  TIME_ANSWER
+  TIMETABLE
+  FILE_UPLOAD
+  ADDRESS_ANSWER
+}
+
+model QuestionCondition {
   id          Int      @id @default(autoincrement())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now()) @updatedAt
   title       String
   description String?
-  age Int
-  term Int
-  isActive Boolean @default(true)
-  invalidAt DateTime?
-  order Int
-  IsMain Boolean @default(false)
-  IsBasic Boolean @default(false)
-  startSending Boolean @default(false) 
+  operator    String   @default("=")
+  value       String
+  questionId  Int
+  question    Question @relation(fields: [questionId], references: [id])
+}
+
+model Option {
+  id         Int        @id @default(autoincrement())
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @default(now()) @updatedAt
+  title      String
+  axis       OptionAxis @default(ROW)
+  order      Int
+  isDefault  Boolean    @default(false)
+  score      Int?
+  questionId Int
+  question   Question   @relation(fields: [questionId], references: [id])
+  rowAnswers Answer[]   @relation(name: "rowAnswer")
+  colAnswers Answer[]   @relation(name: "colAnswer")
+}
+
+enum OptionAxis {
+  ROW
+  COLUMN
+}
+
+model Answer {
+  id         Int           @id @default(autoincrement())
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @default(now()) @updatedAt
+  text       String? // 답변
+  questionId Int
+  question   Question      @relation(fields: [questionId], references: [id])
+  rowId      Int
+  row        Option        @relation(name: "rowAnswer", fields: [rowId], references: [id])
+  colId      Int
+  col        Option        @relation(name: "colAnswer", fields: [colId], references: [id])
+  historyId  Int
+  history    SurveyHistory @relation(fields: [historyId], references: [id])
+}
+
+model SurveyHistory {
+  id         Int       @id @default(autoincrement())
+  createdAt  DateTime  @default(now()) // 설문지 발송일시
+  updatedAt  DateTime  @default(now()) @updatedAt // 설문 답변 complete 된 날짜 여기서 확인 가능
+  expiredAt  DateTime? // 설문 기한 일시인데, 필수인지?
+  isComplete Boolean   @default(false)
+  surveyId   Int
+  survey     Survey    @relation(fields: [surveyId], references: [id])
+  senderId   Int // user 모델과 연결해야 함.
+  receiverId Int // enduser 모델과 연결해야 함.
+  answers    Answer[]
 }
